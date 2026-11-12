@@ -34,7 +34,7 @@ jobs:
           path: |
             .buildozer
             ~/.buildozer
-          key: buildozer-${{ runner.os }}-v1
+          key: buildozer-${{ runner.os }}-v2
 
       - name: Install System & SDL2 Dependencies
         run: |
@@ -48,13 +48,23 @@ jobs:
             ccache g++ libsqlite3-dev \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev
+          echo "Cython==0.29.36" > ~/constraints.txt
+          echo "setuptools<69.0.0" >> ~/constraints.txt
+          export PIP_CONSTRAINT=~/constraints.txt
           pip install --upgrade pip "setuptools<69.0.0" wheel
           pip install "Cython==0.29.36" virtualenv
           pip install git+https://github.com/kivy/buildozer.git@master
 
       - name: Compile Android APK
         run: |
-          yes | buildozer android debug || (tail -n 100 ~/.buildozer/android/platform/build-*/build.log ; exit 1)
+          export PIP_CONSTRAINT=~/constraints.txt
+          export GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx4096m"
+          buildozer android debug
+
+      - name: Show Error End Log (If Failed)
+        if: failure()
+        run: |
+          find .buildozer ~/.buildozer -name "*.log" -exec tail -n 80 {} + || true
 
       - name: Upload Ready APK
         uses: actions/upload-artifact@v4
