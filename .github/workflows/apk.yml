@@ -31,13 +31,16 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake liblzma-dev lld
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake liblzma-dev lld libltdl-dev patch
           pip install --upgrade pip wheel setuptools
-          pip install "Cython<3.0.0" buildozer virtualenv
+          pip install "Cython==0.29.36" buildozer virtualenv
 
-      - name: Compile Android APK
+      - name: Pre-accept Android SDK Licenses & Compile APK
         run: |
-          yes | buildozer -v android debug
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          yes | buildozer android debug
 
       - name: Upload Ready APK
         uses: actions/upload-artifact@v4
