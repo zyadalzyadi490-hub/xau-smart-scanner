@@ -28,17 +28,33 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System & Python Dependencies
+      - name: Cache Buildozer Directories
+        uses: actions/cache@v4
+        with:
+          path: |
+            .buildozer
+            ~/.buildozer
+          key: buildozer-${{ runner.os }}-v1
+
+      - name: Install System & SDL2 Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake liblzma-dev lld libltdl-dev patch
-          pip install --upgrade pip wheel setuptools
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk python3-pip \
+            autoconf libtool libtool-bin pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev automake liblzma-dev \
+            lld libltdl-dev patch gettext build-essential \
+            ccache g++ libsqlite3-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev
+          pip install --upgrade pip "setuptools<69.0.0" wheel
           pip install "Cython==0.29.36" virtualenv
           pip install git+https://github.com/kivy/buildozer.git@master
 
       - name: Compile Android APK
         run: |
-          buildozer android debug
+          yes | buildozer android debug || (tail -n 100 ~/.buildozer/android/platform/build-*/build.log ; exit 1)
 
       - name: Upload Ready APK
         uses: actions/upload-artifact@v4
